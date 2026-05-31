@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG Icon Composer</title>
+    <meta name="description" content="Turn images into clean, perfect SVGs for import into icon composer">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>SVG Icon Composer</h1>
+            <p>Turn images into perfect, scalable vectors</p>
+        </header>
+
+        <main>
+            <div class="workspace">
+                <div class="panel upload-panel" id="drop-zone">
+                    <div class="upload-content" id="upload-content">
+                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <h2>Drag & Drop Image</h2>
+                        <p>or click to browse files (PNG, JPG)</p>
+                        <input type="file" id="file-input" accept="image/png, image/jpeg" hidden>
+                    </div>
+                    <img id="original-preview" class="hidden" alt="Original Image">
+                </div>
+
+                <div class="panel result-panel">
+                    <div class="result-placeholder" id="result-placeholder">
+                        <svg class="wait-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <p>Vector output will appear here</p>
+                    </div>
+                    <div id="svg-container" class="hidden"></div>
+                    <div class="loader hidden" id="loader">
+                        <div class="spinner"></div>
+                        <span>Processing...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar" id="sidebar">
+                <h3>Settings</h3>
+                <div class="control-group">
+                    <label for="preset-select">Preset</label>
+                    <select id="preset-select">
+                        <option value="default">Default</option>
+                        <option value="posterized1">Posterized</option>
+                        <option value="posterized2">Posterized High</option>
+                        <option value="curvy">Curvy</option>
+                        <option value="sharp">Sharp</option>
+                        <option value="detailed">Detailed</option>
+                        <option value="smoothed">Smoothed</option>
+                        <option value="grayscale">Grayscale</option>
+                        <option value="fixedpalette">Fixed Palette</option>
+                        <option value="random1">Random Palette 1</option>
+                        <option value="random2">Random Palette 2</option>
+                        <option value="artistic1">Artistic 1</option>
+                        <option value="artistic2">Artistic 2</option>
+                        <option value="artistic3">Artistic 3</option>
+                        <option value="artistic4">Artistic 4</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label>Colors: <span id="numberofcolors-val">16</span></label>
+                    <input type="range" id="numberofcolors" min="2" max="64" value="16">
+                </div>
+
+                <div class="control-group">
+                    <label>Min Color Ratio: <span id="mincolorratio-val">0</span></label>
+                    <input type="range" id="mincolorratio" min="0" max="1" step="0.01" value="0">
+                </div>
+
+                <div class="control-group">
+                    <label>Color Quant Cycles: <span id="colorquantcycles-val">3</span></label>
+                    <input type="range" id="colorquantcycles" min="1" max="10" value="3">
+                </div>
+
+                <div class="control-group">
+                    <label>Blur Radius: <span id="blurradius-val">0</span></label>
+                    <input type="range" id="blurradius" min="0" max="5" step="0.1" value="0">
+                </div>
+                
+                <div class="control-group">
+                    <label>Blur Delta: <span id="blurdelta-val">20</span></label>
+                    <input type="range" id="blurdelta" min="0" max="255" value="20">
+                </div>
+
+                <div class="control-group">
+                    <label>Stroke Width: <span id="strokewidth-val">1</span></label>
+                    <input type="range" id="strokewidth" min="0" max="5" step="0.1" value="1">
+                </div>
+
+                <div class="control-group" style="flex-direction: row; align-items: center;">
+                    <input type="checkbox" id="linefilter" style="margin-right: 8px;">
+                    <label for="linefilter">Line Filter</label>
+                </div>
+
+                <div class="control-group">
+                    <label>Scale: <span id="scale-val">1</span></label>
+                    <input type="range" id="scale" min="0.1" max="10" step="0.1" value="1">
+                </div>
+                
+                <div class="control-group" style="flex-direction: row; align-items: center; margin-top: 8px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+                    <input type="checkbox" id="keepwhite" style="margin-right: 8px;">
+                    <label for="keepwhite" style="color: var(--text-main); font-weight: 600;">Extract White Only</label>
+                </div>
+
+                <div class="control-group" id="white-threshold-group" style="display: none;">
+                    <label>White Threshold: <span id="whitethreshold-val">180</span></label>
+                    <input type="range" id="whitethreshold" min="0" max="255" value="180">
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Increase this if gray background parts are showing up.</p>
+                </div>
+
+                <div class="control-group" style="margin-top: 8px;">
+                    <label>Despeckle (Remove Noise): <span id="despeckle-val">0</span></label>
+                    <input type="range" id="despeckle" min="0" max="500" value="0">
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Removes small dots and jagged artifacts.</p>
+                </div>
+
+                <div class="control-group" style="flex-direction: row; align-items: center; margin-top: 8px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+                    <input type="checkbox" id="viewbox" style="margin-right: 8px;">
+                    <label for="viewbox">Viewbox</label>
+                </div>
+                <div class="control-group" style="flex-direction: row; align-items: center;">
+                    <input type="checkbox" id="desc" style="margin-right: 8px;">
+                    <label for="desc">Descriptions</label>
+                </div>
+                <div class="control-group" style="flex-direction: row; align-items: center;">
+                    <input type="checkbox" id="qspline" style="margin-right: 8px;">
+                    <label for="qspline">Q-Splines</label>
+                </div>
+                <div class="control-group" style="flex-direction: row; align-items: center;">
+                    <input type="checkbox" id="rightangleenhance" style="margin-right: 8px;" checked>
+                    <label for="rightangleenhance">Right Angle Enhance</label>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-primary w-100" id="btn-export" disabled>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Download SVG
+                    </button>
+                    <button class="btn btn-secondary w-100 mt-2" id="btn-reset" disabled>Reset Settings</button>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
